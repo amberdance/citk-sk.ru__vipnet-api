@@ -2,12 +2,13 @@ package citsk.ru.vipnet.mapper;
 
 import citsk.ru.vipnet.dto.UserDto;
 import citsk.ru.vipnet.entity.user.User;
+import citsk.ru.vipnet.entity.user.User.UserBuilder;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2023-05-18T10:25:50+0300",
+    date = "2023-05-18T15:51:22+0300",
     comments = "version: 1.4.2.Final, compiler: javac, environment: Java 17.0.5 (Oracle Corporation)"
 )
 @Component
@@ -21,9 +22,10 @@ public class UserMapperImpl implements UserMapper {
 
         UserDto userDto = new UserDto();
 
+        userDto.setId( user.getId() );
         userDto.setCreatedAt( user.getCreatedAt() );
         userDto.setUpdatedAt( user.getUpdatedAt() );
-        userDto.setLogin( user.getLogin() );
+        userDto.setUsername( user.getUsername() );
         userDto.setPassword( user.getPassword() );
         userDto.setFirstName( user.getFirstName() );
         userDto.setLastName( user.getLastName() );
@@ -40,18 +42,19 @@ public class UserMapperImpl implements UserMapper {
             return null;
         }
 
-        User user = new User();
+        UserBuilder user = User.builder();
 
-        user.setCreatedAt( userDto.getCreatedAt() );
-        user.setUpdatedAt( userDto.getUpdatedAt() );
-        user.setLogin( userDto.getLogin() );
-        user.setPassword( userDto.getPassword() );
-        user.setFirstName( userDto.getFirstName() );
-        user.setLastName( userDto.getLastName() );
-        user.setPatronymic( userDto.getPatronymic() );
-        user.setEnabled( userDto.isEnabled() );
-        user.setRole( userDto.getRole() );
+        user.id( userDto.getId() );
+        user.createdAt( userDto.getCreatedAt() );
+        user.updatedAt( userDto.getUpdatedAt() );
+        user.username( userDto.getUsername() );
+        user.password( userDto.getPassword() );
+        user.firstName( userDto.getFirstName() );
+        user.lastName( userDto.getLastName() );
+        user.patronymic( userDto.getPatronymic() );
+        user.enabled( userDto.isEnabled() );
+        user.role( userDto.getRole() );
 
-        return user;
+        return user.build();
     }
 }

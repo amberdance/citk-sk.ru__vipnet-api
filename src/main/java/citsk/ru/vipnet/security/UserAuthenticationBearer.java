@@ -15,7 +15,7 @@ public class UserAuthenticationBearer {
         var username = claims.get("username", String.class);
         var authorities = List.of(new SimpleGrantedAuthority(role));
         var principal =
-                new CustomPrincipal(Long.parseLong(subject), username).getId();
+                new CustomPrincipal(Long.parseLong(subject), username);
 
         return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, authorities));
     }

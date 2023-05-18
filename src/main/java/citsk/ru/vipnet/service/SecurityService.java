@@ -2,7 +2,6 @@ package citsk.ru.vipnet.service;
 
 import citsk.ru.vipnet.entity.user.User;
 import citsk.ru.vipnet.exception.AuthException;
-import citsk.ru.vipnet.repository.UserRepository;
 import citsk.ru.vipnet.security.TokenDetails;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -19,7 +18,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class SecurityService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
@@ -35,7 +34,7 @@ public class SecurityService {
     private TokenDetails generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole());
-        claims.put("username", user.getLogin());
+        claims.put("username", user.getUsername());
 
         return generateToken(claims, user.getId().toString());
     }
@@ -72,14 +71,14 @@ public class SecurityService {
                 .build();
     }
 
-    public Mono<TokenDetails> authenticate(String login, String password) {
-        return userRepository.findByLogin(login).flatMap(user -> {
+    public Mono<TokenDetails> authenticate(String username, String password) {
+        return userService.getUserByUsername(username).flatMap(user -> {
             if (!user.isEnabled()) {
                 return Mono.error(new AuthException("User is disabled",
                         "USER_ACCOUNT_DISABLED"));
             }
 
-            if (passwordEncoder.matches(password, user.getPassword())) {
+            if (!passwordEncoder.matches(password, user.getPassword())) {
                 return Mono.error(new AuthException("Invalid password",
                         "INVALID_PASSWORD"));
             }

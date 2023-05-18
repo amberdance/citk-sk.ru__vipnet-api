@@ -1,7 +1,8 @@
 package citsk.ru.vipnet.entity.user;
 
-import citsk.ru.vipnet.entity.AbstractEntity;
+import jakarta.validation.constraints.Email;
 import lombok.*;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
@@ -9,14 +10,19 @@ import java.time.LocalDateTime;
 
 @Table("users")
 @Data
-@EqualsAndHashCode(callSuper = true)
+@Builder(toBuilder = true)
+@EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
-public class User extends AbstractEntity {
+public class User {
 
+    @Id
+    private Long id;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String login;
+
+    @Email
+    private String username;
     private String password;
     private String firstName;
     private String lastName;
