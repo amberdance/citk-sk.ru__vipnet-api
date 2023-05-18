@@ -1,0 +1,14 @@
+server:
+  port: 9000
+
+spring:
+  r2dbc:
+    url: r2dbc:pool:postgresql://localhost:5430/test_db
+    username: postgres
+    password: postgres
+
+  flyway:
+    url: jdbc:postgresql://localhost:5430/test_db
+    locations: classpath:/db/migration
+    user: postgres
+    password: postgres
