@@ -1,8 +1,8 @@
 package citsk.ru.vipnet.mapper;
 
 import citsk.ru.vipnet.dto.UserDto;
-import citsk.ru.vipnet.entity.user.User;
-import citsk.ru.vipnet.entity.user.User.UserBuilder;
+import citsk.ru.vipnet.model.user.User;
+import citsk.ru.vipnet.model.user.User.UserBuilder;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 

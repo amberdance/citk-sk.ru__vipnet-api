@@ -1,57 +1,62 @@
 package citsk.ru.vipnet.config;
 
-import citsk.ru.vipnet.security.AuthenticationManager;
-import citsk.ru.vipnet.security.BearerTokenAuthenticationConverter;
-import citsk.ru.vipnet.security.JwtHandler;
-import org.springframework.beans.factory.annotation.Value;
+import citsk.ru.vipnet.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
-import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
-import reactor.core.publisher.Mono;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
 
 @Configuration
-@EnableReactiveMethodSecurity
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthenticationProvider authenticationProvider;
+    private final LogoutHandler logoutHandler;
+
 
     private final String[] publicRoutes = {"/api/v1/auth/login", "/api/v1" +
             "/auth/register"};
 
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authenticationManager) {
-        return http.csrf().disable()
-                   .authorizeExchange()
-                   .pathMatchers(HttpMethod.OPTIONS)
-                   .permitAll()
-                   .pathMatchers(publicRoutes)
-                   .permitAll()
-                   .anyExchange()
-                   .authenticated()
-                   .and()
-                   .exceptionHandling()
-                   .authenticationEntryPoint((exchange, exception) -> Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED)))
-                   .accessDeniedHandler(((exchange, denied) -> Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN))))
-                   .and()
-                   .addFilterAt(bearerAuthenticationWebFilter(authenticationManager), SecurityWebFiltersOrder.AUTHENTICATION)
-                .build();
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf().disable()
+                .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.OPTIONS)
+                .permitAll()
+                .requestMatchers(publicRoutes)
+                .permitAll()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authenticationProvider(authenticationProvider)
+//                .exceptionHandling()
+//                .authenticationEntryPoint((request, response, exception) -> response.setStatus(HttpStatus.UNAUTHORIZED.value()))
+//                .accessDeniedHandler(((request, response, exception) -> response.setStatus(HttpStatus.FORBIDDEN.value())))
+//                .and()
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .logout()
+                .logoutUrl("/api/v1/auth/logout")
+                .addLogoutHandler(logoutHandler)
+                .logoutSuccessHandler((req, res, ex) -> SecurityContextHolder.clearContext());
+
+        return http.build();
     }
 
-    private AuthenticationWebFilter bearerAuthenticationWebFilter(AuthenticationManager authenticationManager) {
-        var bearerAuthenticationFilter =
-                new AuthenticationWebFilter(authenticationManager);
 
-        bearerAuthenticationFilter.setServerAuthenticationConverter(new BearerTokenAuthenticationConverter(new JwtHandler(secret)));
-        bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/**"));
-
-        return bearerAuthenticationFilter;
-    }
 }

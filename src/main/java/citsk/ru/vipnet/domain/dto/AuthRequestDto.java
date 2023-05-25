@@ -1,4 +1,4 @@
-package citsk.ru.vipnet.dto;
+package citsk.ru.vipnet.domain.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

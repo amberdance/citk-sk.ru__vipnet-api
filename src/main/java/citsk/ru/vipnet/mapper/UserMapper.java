@@ -1,16 +1,19 @@
 package citsk.ru.vipnet.mapper;
 
-import citsk.ru.vipnet.dto.UserDto;
-import citsk.ru.vipnet.entity.user.User;
-import org.mapstruct.InheritInverseConfiguration;
-import org.mapstruct.Mapper;
+import citsk.ru.vipnet.domain.dto.UserDto;
+import citsk.ru.vipnet.domain.model.User;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel =
+        "spring")
 public interface UserMapper {
+    User toEntity(UserDto userDto);
 
-    UserDto map(User user);
+    UserDto toDto(User user);
 
-    @InheritInverseConfiguration
-    User map(UserDto userDto);
+    @BeanMapping(nullValuePropertyMappingStrategy =
+            NullValuePropertyMappingStrategy.IGNORE)
+    User partialUpdate(UserDto userDto, @MappingTarget User user);
 
 }

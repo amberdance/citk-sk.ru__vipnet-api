@@ -1,48 +1,54 @@
 package citsk.ru.vipnet.controller;
 
-import citsk.ru.vipnet.dto.AuthRequestDto;
-import citsk.ru.vipnet.dto.AuthResponseDto;
-import citsk.ru.vipnet.dto.UserDto;
+import citsk.ru.vipnet.domain.dto.AuthRegisterRequestDto;
+import citsk.ru.vipnet.domain.dto.AuthRequestDto;
+import citsk.ru.vipnet.domain.dto.AuthResponseDto;
+import citsk.ru.vipnet.domain.dto.UserDto;
 import citsk.ru.vipnet.mapper.UserMapper;
-import citsk.ru.vipnet.security.CustomPrincipal;
-import citsk.ru.vipnet.service.SecurityService;
-import citsk.ru.vipnet.service.UserService;
+import citsk.ru.vipnet.service.security.AuthService;
+import citsk.ru.vipnet.service.user.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
+@Slf4j
 public class AuthController {
 
-    private final SecurityService securityService;
+    private final AuthService authService;
     private final UserService userService;
     private final UserMapper userMapper;
 
     @PostMapping("/register")
-    public Mono<UserDto> register(@RequestBody UserDto dto) {
-        var user = userMapper.map(dto);
-        return userService.registerUser(user).map(userMapper::map);
+    public AuthResponseDto register(@RequestBody AuthRegisterRequestDto request) {
+        log.info("data: {}", request);
+
+        return authService.register(request);
     }
 
     @GetMapping("/login")
-    public Mono<AuthResponseDto> login(@RequestBody AuthRequestDto dto) {
-        return securityService.authenticate(dto.getUsername(),
-                                      dto.getPassword())
-                              .flatMap(tokenDetails ->
-                                      Mono.just(AuthResponseDto.builder()
-                                                               .userId(tokenDetails.getUserId())
-                                                               .token(tokenDetails.getToken())
-                                                               .issuedAt(tokenDetails.getIssuedAt())
-                                                               .expiresAt(tokenDetails.getExpiresAt())
-                                              .build()));
+    public AuthResponseDto login(@RequestBody AuthRequestDto request) {
+        return authService.authenticate(request);
+    }
+
+    @PostMapping("/refresh-token")
+    public void refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+        authService.refreshUserToken(request, response);
     }
 
     @GetMapping("/me")
-    public Mono<UserDto> getUserInfo(Authentication authentication) {
-        return userService.getUserById(((CustomPrincipal) authentication.getPrincipal()).getId()).map(userMapper::map);
+    public UserDto getUserInfo(Authentication authentication) {
+        return userMapper.toDto(userService.getUserById(((UserDto) authentication.getPrincipal()).getId()));
     }
 
 }
